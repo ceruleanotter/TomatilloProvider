@@ -166,9 +166,18 @@ public class TomatilloProvider extends ContentProvider {
                         // Check the data is okay
                         checkInput(value);
                         // Try to insert
-                        long _id = db.insert(Movie.TABLE_NAME, null, value);
+                        long id = -1;
+                        try {
+                            id = db.insertOrThrow(Movie.TABLE_NAME, null, value);
+                        } catch (SQLiteConstraintException e) {
+                            Log.i(LOG_TAG,
+                                    "Trying to insert " + value.getAsString(Movie.TITLE) +
+                                            " but it's already in the database."
+                            );
+                            // Do nothing if the movie is already there.
+                        }
                         // As long as the insert didn't fail, increment the numberInserted
-                        if (_id != -1) {
+                        if (id != -1) {
                             numberInserted++;
                         }
                     }
