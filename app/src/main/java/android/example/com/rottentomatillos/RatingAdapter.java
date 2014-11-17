@@ -54,10 +54,13 @@ public class RatingAdapter extends CursorAdapter {
     }
 
     private static final String LOG_TAG = RatingAdapter.class.getSimpleName();
+    private static int sLoaderID;
 
-    public RatingAdapter(Context context, Cursor c, int flags) {
+
+    public RatingAdapter(Context context, Cursor c, int flags, int loaderID) {
         super(context, c, flags);
         mContext = context;
+        sLoaderID = loaderID;
     }
 
     @Override
@@ -112,12 +115,19 @@ public class RatingAdapter extends CursorAdapter {
         public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
             // If the user changed the rating, update the rating in the ContentProvider.
             if (fromUser) {
+                long roundedRating = Math.max(Math.min(Math.round(rating),5),0);
+                ratingBar.setRating(roundedRating);
+
                 ContentValues values = new ContentValues();
-                values.put(Movie.RATING, rating);
+                values.put(Movie.RATING, roundedRating);
+
                 mContext.getContentResolver().update(
                         ContentUris.withAppendedId(Movie.CONTENT_URI,
                                 mID),
                         values,null,null);
+                // Tell the loader to reload the data in the cursor adapter.
+                ((MainActivity)mContext).getSupportLoaderManager().restartLoader(
+                        sLoaderID, null, (MainActivity)mContext);
             }
         }
     }
